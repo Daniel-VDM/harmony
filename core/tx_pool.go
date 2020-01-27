@@ -80,6 +80,10 @@ var (
 	// than some meaningful limit a user might use. This is not a consensus error
 	// making the transaction invalid, rather a DOS protection.
 	ErrOversizedData = errors.New("oversized data")
+
+	// ErrKnownTransaction is returned if a transaction that is already in the pool
+	// is attempted to be added to the pool.
+	ErrKnownTransaction = errors.New("known transaction")
 )
 
 var (
@@ -303,11 +307,13 @@ func (pool *TxPool) loop() {
 		select {
 		// Handle ChainHeadEvent
 		case ev := <-pool.chainHeadCh:
+			utils.Logger().Debug().Msgf("~chain-event-triggered")
 			if ev.Block != nil {
 				pool.mu.Lock()
 				if pool.chainconfig.IsS3(ev.Block.Epoch()) {
 					pool.homestead = true
 				}
+				utils.Logger().Debug().Msgf("~chain-event-RESET-triggered")
 				pool.reset(head.Header(), ev.Block.Header())
 				head = ev.Block
 				pool.mu.Unlock()
@@ -430,9 +436,14 @@ func (pool *TxPool) reset(oldHead, newHead *block.Header) {
 					return
 				}
 			}
+			utils.Logger().Debug().Msgf("~~discarded %d", len(discarded))
+			utils.Logger().Debug().Msgf("~~included %d", len(included))
 			reinject = types.TxDifference(discarded, included)
 		}
 	}
+
+	utils.Logger().Debug().Msgf("~~reinject %d", len(reinject))
+
 	// Initialize the internal state to the current head
 	if newHead == nil {
 		newHead = pool.chain.CurrentBlock().Header() // Special case during testing
@@ -657,11 +668,12 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 // the pool due to pricing constraints.
 func (pool *TxPool) add(tx *types.Transaction, local bool) (bool, error) {
 	logger := utils.Logger().With().Stack().Logger()
+	utils.Logger().Debug().Msgf("~~addtx %s", tx.Hash().String())
 	// If the transaction is already known, discard it
 	hash := tx.Hash()
 	if pool.all.Get(hash) != nil {
 		logger.Warn().Str("hash", hash.Hex()).Msg("Discarding already known transaction")
-		return false, fmt.Errorf("known transaction: %x", hash)
+		return false, errors.WithMessagef(ErrKnownTransaction, "transaction hash %x", hash)
 	}
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx, local); err != nil {
@@ -866,18 +878,16 @@ func (pool *TxPool) addTx(tx *types.Transaction, local bool) error {
 	defer pool.mu.Unlock()
 
 	// Try to inject the transaction and update any state
-	isKnownTx := pool.all.Get(tx.Hash()) != nil
 	replace, err := pool.add(tx, local)
 	if err != nil {
-		if !isKnownTx {
-			pool.txnErrorSink([]types.RPCTransactionError{
-				{
-					TxHashID:             tx.Hash().Hex(),
-					TimestampOfRejection: time.Now().Unix(),
-					ErrMessage:           err.Error(),
-				},
-			})
-		}
+		utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
+		pool.txnErrorSink([]types.RPCTransactionError{
+			{
+				TxHashID:             tx.Hash().Hex(),
+				TimestampOfRejection: time.Now().Unix(),
+				ErrMessage:           err.Error(),
+			},
+		})
 		return err
 	}
 	// If we added a new transaction, run promotion checks and return
@@ -906,12 +916,12 @@ func (pool *TxPool) addTxsLocked(txs []*types.Transaction, local bool) []error {
 
 	for i, tx := range txs {
 		var replace bool
-		isKnownTx := pool.all.Get(tx.Hash()) != nil
 		if replace, errs[i] = pool.add(tx, local); errs[i] == nil && !replace {
 			from, _ := types.Sender(pool.signer, tx) // already validated
 			dirty[from] = struct{}{}
 		}
-		if errs[i] != nil && !isKnownTx {
+		if errs[i] != nil {
+			utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
 			erroredTxns = append(erroredTxns, types.RPCTransactionError{
 				TxHashID:             tx.Hash().Hex(),
 				TimestampOfRejection: time.Now().Unix(),
@@ -1025,6 +1035,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) {
 		// Drop all transactions that are deemed too old (low nonce)
 		for _, tx := range list.Forward(pool.currentState.GetNonce(addr)) {
 			hash := tx.Hash()
+			// TODO: add onto this to check for failed transactions...
 			logger.Warn().Str("hash", hash.Hex()).Msg("Removed old queued transaction")
 			pool.all.Remove(hash)
 			pool.priced.Removed()
@@ -1033,6 +1044,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) {
 		drops, _ := list.Filter(pool.currentState.GetBalance(addr), pool.currentMaxGas)
 		for _, tx := range drops {
 			hash := tx.Hash()
+			// TODO: add onto this to check for failed transactions...
 			logger.Warn().Str("hash", hash.Hex()).Msg("Removed unpayable queued transaction")
 			pool.all.Remove(hash)
 			pool.priced.Removed()
@@ -1053,6 +1065,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) {
 				pool.all.Remove(hash)
 				pool.priced.Removed()
 				queuedRateLimitCounter.Inc(1)
+				// TODO: add onto this to check for failed transactions...
 				logger.Warn().Str("hash", hash.Hex()).Msg("Removed cap-exceeding queued transaction")
 			}
 		}
@@ -1194,6 +1207,7 @@ func (pool *TxPool) demoteUnexecutables() {
 			hash := tx.Hash()
 			logger.Warn().Str("hash", hash.Hex()).Msg("Removed old pending transaction")
 			if pool.chain.CurrentBlock().Transaction(hash) == nil {
+				utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
 				erroredTxns = append(erroredTxns, types.RPCTransactionError{
 					TxHashID:             hash.Hex(),
 					TimestampOfRejection: time.Now().Unix(),
@@ -1208,6 +1222,7 @@ func (pool *TxPool) demoteUnexecutables() {
 		for _, tx := range drops {
 			hash := tx.Hash()
 			logger.Warn().Str("hash", hash.Hex()).Msg("Removed unpayable pending transaction")
+			utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
 			erroredTxns = append(erroredTxns, types.RPCTransactionError{
 				TxHashID:             hash.Hex(),
 				TimestampOfRejection: time.Now().Unix(),
@@ -1221,6 +1236,7 @@ func (pool *TxPool) demoteUnexecutables() {
 		for _, tx := range invalids {
 			hash := tx.Hash()
 			logger.Warn().Str("hash", hash.Hex()).Msg("Demoting pending transaction")
+			utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
 			erroredTxns = append(erroredTxns, types.RPCTransactionError{
 				TxHashID:             hash.Hex(),
 				TimestampOfRejection: time.Now().Unix(),
@@ -1233,6 +1249,7 @@ func (pool *TxPool) demoteUnexecutables() {
 			for _, tx := range list.Cap(0) {
 				hash := tx.Hash()
 				logger.Error().Str("hash", hash.Hex()).Msg("Demoting invalidated transaction")
+				utils.Logger().Error().Msgf("~~~~Add tx %s to error ring", tx.Hash().String())
 				erroredTxns = append(erroredTxns, types.RPCTransactionError{
 					TxHashID:             hash.Hex(),
 					TimestampOfRejection: time.Now().Unix(),

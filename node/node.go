@@ -323,7 +323,7 @@ func (node *Node) AddPendingStakingTransaction(
 // AddPendingTransaction adds one new transaction to the pending transaction list.
 // This is only called from SDK.
 func (node *Node) AddPendingTransaction(newTx *types.Transaction) {
-	if node.Consensus.IsLeader() && newTx.ShardID() == node.NodeConfig.ShardID {
+	if (node.Consensus.IsLeader() || node.NodeConfig.Role() == nodeconfig.ExplorerNode) && newTx.ShardID() == node.NodeConfig.ShardID {
 		node.addPendingTransactions(types.Transactions{newTx})
 	} else {
 		utils.Logger().Info().Str("Hash", newTx.Hash().Hex()).Msg("Broadcasting Tx")
