@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"context"
+	"errors"
 	"math/big"
 	"math/rand"
 	"time"
@@ -190,6 +191,13 @@ func (node *Node) transactionMessageHandler(msgPayload []byte) {
 		utils.Logger().Debug().Msgf("Invalid transaction message size")
 		return
 	}
+	if len(msgPayload) > (32+10)*1024 { // TODO make clean
+		utils.Logger().
+			Error().
+			Err(errors.New("encoded transaction exceeded 42KB")).
+			Msg("[NET] encoded packet too big")
+		return
+	}
 	txMessageType := proto_node.TransactionMessageType(msgPayload[0])
 
 	switch txMessageType {
@@ -209,6 +217,13 @@ func (node *Node) transactionMessageHandler(msgPayload []byte) {
 func (node *Node) stakingMessageHandler(msgPayload []byte) {
 	if len(msgPayload) < 1 {
 		utils.Logger().Debug().Msgf("Invalid staking transaction message size")
+		return
+	}
+	if len(msgPayload) > (32+10)*1024 { // TODO make clean
+		utils.Logger().
+			Error().
+			Err(errors.New("encoded staking transaction exceeded 42KB")).
+			Msg("[NET] encoded packet too big")
 		return
 	}
 	txMessageType := proto_node.TransactionMessageType(msgPayload[0])
