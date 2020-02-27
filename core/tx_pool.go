@@ -179,7 +179,7 @@ var DefaultTxPoolConfig = TxPoolConfig{
 	AccountQueue: 64,
 	GlobalQueue:  1024,
 
-	Lifetime: 3 * time.Hour,
+	Lifetime: 3 * time.Minute,
 
 	Blacklist: map[common.Address]struct{}{},
 }
