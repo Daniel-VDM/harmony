@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"context"
+	"errors"
 	"math/big"
 	"math/rand"
 	"time"
@@ -186,6 +187,13 @@ func (node *Node) HandleMessage(content []byte, sender libp2p_peer.ID) {
 }
 
 func (node *Node) transactionMessageHandler(msgPayload []byte) {
+	if len(msgPayload) > (32+10)*1024 { // TODO make clean
+		utils.Logger().
+			Error().
+			Err(errors.New("encoded transaction exceeded 42KB")).
+			Msg("[NET] encoded packet too big")
+		return
+	}
 	if len(msgPayload) < 1 {
 		utils.Logger().Debug().Msgf("Invalid transaction message size")
 		return
@@ -207,6 +215,13 @@ func (node *Node) transactionMessageHandler(msgPayload []byte) {
 }
 
 func (node *Node) stakingMessageHandler(msgPayload []byte) {
+	if len(msgPayload) > (32+10)*1024 { // TODO make clean
+		utils.Logger().
+			Error().
+			Err(errors.New("encoded staking transaction exceeded 42KB")).
+			Msg("[NET] encoded packet too big")
+		return
+	}
 	if len(msgPayload) < 1 {
 		utils.Logger().Debug().Msgf("Invalid staking transaction message size")
 		return

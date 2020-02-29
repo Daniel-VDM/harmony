@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"context"
+	"github.com/harmony-one/harmony/internal/utils"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -209,6 +210,12 @@ func (s *PublicTransactionPoolAPI) SendTransaction(ctx context.Context, args Sen
 func (s *PublicTransactionPoolAPI) SendRawStakingTransaction(
 	ctx context.Context, encodedTx hexutil.Bytes,
 ) (common.Hash, error) {
+	if len(encodedTx) > (32+10)*1024 { // TODO make clean
+		err := errors.New("encoded staking transaction exceeded 42KB")
+		utils.Logger().Error().Err(err).Msg("[RPC] encoded packet too big")
+		return common.Hash{}, err
+
+	}
 	tx := new(staking.StakingTransaction)
 	if err := rlp.DecodeBytes(encodedTx, tx); err != nil {
 		return common.Hash{}, err
@@ -224,6 +231,11 @@ func (s *PublicTransactionPoolAPI) SendRawStakingTransaction(
 // SendRawTransaction will add the signed transaction to the transaction pool.
 // The sender is responsible for signing the transaction and using the correct nonce.
 func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, encodedTx hexutil.Bytes) (common.Hash, error) {
+	if len(encodedTx) > (32+10)*1024 { // TODO make clean
+		err := errors.New("encoded transaction exceeded 42KB")
+		utils.Logger().Error().Err(err).Msg("[RPC] encoded packet too big")
+		return common.Hash{}, err
+	}
 	tx := new(types.Transaction)
 	if err := rlp.DecodeBytes(encodedTx, tx); err != nil {
 		return common.Hash{}, err
