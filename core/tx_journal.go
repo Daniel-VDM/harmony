@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -53,12 +54,14 @@ func (*devNull) Close() error                      { return nil }
 type txJournal struct {
 	path   string         // Filesystem path to store the transactions at
 	writer io.WriteCloser // Output stream to write new transactions into
+	logger zerolog.Logger // Zero logger for journal
 }
 
 // newTxJournal creates a new transaction journal to
 func newTxJournal(path string) *txJournal {
 	return &txJournal{
-		path: path,
+		path:   path,
+		logger: utils.Logger().With().Stack().Logger(),
 	}
 }
 
@@ -108,7 +111,7 @@ func (journal *txJournal) load(add func(types.PoolTransactions) []error) error {
 	loadBatch := func(txs types.PoolTransactions) {
 		for _, err := range add(txs) {
 			if err != nil {
-				utils.Logger().Error().Err(err).Msg("Failed to add journaled transaction")
+				journal.logger.Error().Err(err).Msg("Failed to add journaled transaction")
 				dropped++
 			}
 		}
@@ -126,7 +129,7 @@ func (journal *txJournal) load(add func(types.PoolTransactions) []error) error {
 				if err == io.EOF { // reached end of journal file, exit with no error after loading batch
 					err = nil
 				} else {
-					utils.Logger().Info().
+					journal.logger.Info().
 						Int("transactions", total).
 						Int("dropped", dropped).
 						Msg("Loaded local transaction journal")
@@ -140,7 +143,7 @@ func (journal *txJournal) load(add func(types.PoolTransactions) []error) error {
 
 		if err = stream.Decode(tx); err != nil {
 			// should never hit EOF here with the leading ID journal tx encoding scheme.
-			utils.Logger().Info().
+			journal.logger.Info().
 				Int("transactions", total).
 				Int("dropped", dropped).
 				Msg("Loaded local transaction journal")
@@ -203,7 +206,7 @@ func (journal *txJournal) rotate(all map[common.Address]types.PoolTransactions) 
 		return err
 	}
 	journal.writer = sink
-	utils.Logger().Info().
+	journal.logger.Info().
 		Int("transactions", journaled).
 		Int("accounts", len(all)).
 		Msg("Regenerated local transaction journal")
