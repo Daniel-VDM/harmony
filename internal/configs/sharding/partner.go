@@ -81,4 +81,4 @@ var partnerReshardingEpoch = []*big.Int{
 }
 
 var partnerV0 = MustNewInstance(2, 10, 10, genesis.TNHarmonyAccounts, genesis.TNFoundationalAccounts, partnerReshardingEpoch, PartnerSchedule.BlocksPerEpoch())
-var partnerV1 = MustNewInstance(2, 20, 20, genesis.TNHarmonyAccounts, genesis.TNFoundationalAccounts, partnerReshardingEpoch, PartnerSchedule.BlocksPerEpoch())
+var partnerV1 = MustNewInstance(2, 20, 10, genesis.TNHarmonyAccounts, genesis.TNFoundationalAccounts, partnerReshardingEpoch, PartnerSchedule.BlocksPerEpoch())
