@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"encoding/hex"
+	"github.com/harmony-one/harmony/internal/utils"
 	"math/big"
 	"strings"
 	"time"
@@ -206,6 +207,7 @@ func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber
 // newRPCStakingTransaction returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func newRPCStakingTransaction(tx *types2.StakingTransaction, blockHash common.Hash, blockNumber uint64, timestamp uint64, index uint64) *RPCStakingTransaction {
+	utils.Logger().Debug().Msg("[RPC CALL] newRPCStakingTransaction: " + blockHash.String())
 	from, _ := tx.SenderAddress()
 	v, r, s := tx.RawSignatureValues()
 
@@ -295,6 +297,8 @@ func newRPCStakingTransaction(tx *types2.StakingTransaction, blockHash common.Ha
 		}
 	}
 
+	utils.Logger().Debug().Msg("[RPC CALL] Made it out of case switch: " + blockHash.String())
+
 	result := &RPCStakingTransaction{
 		Gas:       hexutil.Uint64(tx.Gas()),
 		GasPrice:  (*hexutil.Big)(tx.GasPrice()),
@@ -307,17 +311,23 @@ func newRPCStakingTransaction(tx *types2.StakingTransaction, blockHash common.Ha
 		Type:      stakingTxType,
 		Msg:       fields,
 	}
+
+	utils.Logger().Debug().Msg("[RPC CALL] Setting Result: " + blockHash.String())
 	if blockHash != (common.Hash{}) {
 		result.BlockHash = blockHash
 		result.BlockNumber = (*hexutil.Big)(new(big.Int).SetUint64(blockNumber))
 		result.TransactionIndex = hexutil.Uint(index)
 	}
 
+	utils.Logger().Debug().Msg("[RPC CALL] Setting BlockHash: " + blockHash.String())
+
 	fromAddr, err := internal_common.AddressToBech32(from)
 	if err != nil {
 		return nil
 	}
 	result.From = fromAddr
+
+	utils.Logger().Debug().Msg("[RPC CALL] Returning Result: " + blockHash.String())
 
 	return result
 }

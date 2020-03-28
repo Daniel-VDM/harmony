@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"context"
+	"github.com/harmony-one/harmony/internal/utils"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -124,12 +125,14 @@ func (s *PublicTransactionPoolAPI) GetTransactionByHash(ctx context.Context, has
 
 // GetStakingTransactionByHash returns the staking transaction for the given hash
 func (s *PublicTransactionPoolAPI) GetStakingTransactionByHash(ctx context.Context, hash common.Hash) *RPCStakingTransaction {
+	utils.Logger().Debug().Msg("[RPC CALL] Fetching staking transaction: " + hash.String())
 	// Try to return an already finalized transaction
 	stx, blockHash, blockNumber, index := rawdb.ReadStakingTransaction(s.b.ChainDb(), hash)
 	block, _ := s.b.GetBlock(ctx, blockHash)
 	if block == nil {
 		return nil
 	}
+	utils.Logger().Debug().Msg("[RPC CALL] Fetched Block for staking transaction: " + hash.String())
 	if stx != nil {
 		return newRPCStakingTransaction(stx, blockHash, blockNumber, block.Time().Uint64(), index)
 	}
