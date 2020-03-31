@@ -349,6 +349,7 @@ func (s *PublicBlockChainAPI) GetStorageAt(ctx context.Context, addr string, key
 // GetBalanceByBlockNumber returns balance by block number.
 func (s *PublicBlockChainAPI) GetBalanceByBlockNumber(ctx context.Context, address string, blockNr int64) (*big.Int, error) {
 	addr := internal_common.ParseAddr(address)
+	utils.Logger().Debug().Msgf("[RPC] got address %v", addr.String())
 	return s.b.GetBalance(ctx, addr, rpc.BlockNumber(blockNr))
 }
 
@@ -356,6 +357,7 @@ func (s *PublicBlockChainAPI) GetBalanceByBlockNumber(ctx context.Context, addre
 // given block number. The rpc.LatestBlockNumber and rpc.PendingBlockNumber meta
 // block numbers are also allowed.
 func (s *PublicBlockChainAPI) GetBalance(ctx context.Context, address string) (*big.Int, error) {
+	utils.Logger().Debug().Msgf("[RPC] getting balance for %v", address)
 	return s.GetBalanceByBlockNumber(ctx, address, -1)
 }
 
