@@ -3,6 +3,7 @@ package hmy
 import (
 	"context"
 	"fmt"
+	"github.com/harmony-one/harmony/internal/utils"
 	"math/big"
 	"sync"
 
@@ -226,10 +227,11 @@ func (b *APIBackend) GetPoolTransactions() (types.PoolTransactions, error) {
 
 // GetBalance returns balance of an given address.
 func (b *APIBackend) GetBalance(ctx context.Context, address common.Address, blockNr rpc.BlockNumber) (*big.Int, error) {
-	state, _, err := b.StateAndHeaderByNumber(ctx, blockNr)
+	state, blk, err := b.StateAndHeaderByNumber(ctx, blockNr)
 	if state == nil || err != nil {
 		return nil, err
 	}
+	utils.Logger().Debug().Msgf("[RPC] got state for addr %v. Blk info: %v", address.String(), blk.String())
 	return state.GetBalance(address), state.Error()
 }
 

@@ -214,8 +214,10 @@ func (db *DB) Empty(addr common.Address) bool {
 
 // GetBalance retrieves the balance from the given address or 0 if object not found
 func (db *DB) GetBalance(addr common.Address) *big.Int {
+	utils.Logger().Debug().Msgf("[RPC-DB] getting balance for  %v", addr.String())
 	stateObject := db.getStateObject(addr)
 	if stateObject != nil {
+		utils.Logger().Debug().Msgf("[RPC-DB] fetched balance for  %v, got %v", addr.String(), stateObject.Balance().String())
 		return stateObject.Balance()
 	}
 	return common.Big0
