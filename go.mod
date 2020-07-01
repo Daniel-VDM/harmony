@@ -10,6 +10,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/cespare/cp v1.1.1
+	github.com/coinbase/rosetta-sdk-go v0.2.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/davidlazar/go-crypto v0.0.0-20190912175916-7055855a373f // indirect
 	github.com/deckarep/golang-set v1.7.1
@@ -21,14 +22,14 @@ require (
 	github.com/golang/protobuf v1.3.5
 	github.com/golangci/golangci-lint v1.22.2
 	github.com/gorilla/handlers v1.4.0 // indirect
-	github.com/gorilla/mux v1.7.2
-	github.com/gorilla/websocket v1.4.2
+	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/harmony-ek/gencodec v0.0.0-20190215044613-e6740dbdd846
 	github.com/harmony-one/bls v0.0.6
 	github.com/harmony-one/taggedrlp v0.1.4
 	github.com/harmony-one/vdf v0.0.0-20190924175951-620379da8849
 	github.com/hashicorp/golang-lru v0.5.4
-	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
+	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365 // indirect
 	github.com/ipfs/go-ds-badger v0.2.4
 	github.com/jackpal/gateway v1.0.6 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
@@ -37,13 +38,13 @@ require (
 	github.com/libp2p/go-addr-util v0.0.2 // indirect
 	github.com/libp2p/go-libp2p v0.9.2
 	github.com/libp2p/go-libp2p-core v0.5.6
-	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-crypto v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-discovery v0.4.0
-	github.com/libp2p/go-libp2p-host v0.1.0
+	github.com/libp2p/go-libp2p-host v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-kad-dht v0.8.0
-	github.com/libp2p/go-libp2p-net v0.1.0
-	github.com/libp2p/go-libp2p-peer v0.2.0
-	github.com/libp2p/go-libp2p-peerstore v0.2.4
+	github.com/libp2p/go-libp2p-net v0.1.0 // indirect
+	github.com/libp2p/go-libp2p-peer v0.2.0 // indirect
+	github.com/libp2p/go-libp2p-peerstore v0.2.4 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.3.1
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multiaddr-net v0.1.5

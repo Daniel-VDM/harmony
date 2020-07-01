@@ -763,6 +763,8 @@ func main() {
 			Msg("StartRPC failed")
 	}
 
+	currentNode.StartRosettaServer()
+
 	if err := currentNode.BootstrapConsensus(); err != nil {
 		fmt.Println("could not bootstrap consensus", err.Error())
 		os.Exit(-1)
