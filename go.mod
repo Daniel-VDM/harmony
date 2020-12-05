@@ -14,11 +14,10 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.4.6
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v1.7.1
-	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.9.21
 	github.com/fjl/memsize v0.0.0-20180929194037-2a09253e352a // indirect
 	github.com/garslo/gogen v0.0.0-20170307003452-d6ebae628c7c // indirect
-	github.com/golang/gddo v0.0.0-20200831202555-721e228c7686
+	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
 	github.com/golang/mock v1.4.0
 	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2-0.20200707131729-196ae77b8a26 // indirect

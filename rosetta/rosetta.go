@@ -72,10 +72,10 @@ func runHTTPServer(handler http.Handler, endpoint string) {
 			os.Stderr, "Unable to start Rosetta server at: %v - err: %v", endpoint, err.Error(),
 		)
 	}
+	fmt.Printf("Started Rosetta server at: %v\n", endpoint)
 	if err := s.Serve(listener); err != nil {
 		_, _ = fmt.Fprintf(
 			os.Stderr, "Unable to start Rosetta server at: %v - err: %v", endpoint, err.Error(),
 		)
 	}
-	fmt.Printf("Started Rosetta server at: %v\n", endpoint)
 }

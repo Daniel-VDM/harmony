@@ -45,5 +45,5 @@ func (c *AccountAPIController) Routes() server.Routes {
 
 // AccountBalance - Get an Account Balance
 func (c *AccountAPIController) AccountBalance(w http.ResponseWriter, r *http.Request) {
-	// TODO: implement with custom IP writer...
+	c.baseController.AccountBalance(w, r)
 }
