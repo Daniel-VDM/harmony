@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/coinbase/rosetta-sdk-go/asserter"
-	rosettaServer "github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/coinbase/rosetta-sdk-go/types"
 	"github.com/harmony-one/harmony/rosetta/server"
 
@@ -15,7 +14,6 @@ import (
 	nodeconfig "github.com/harmony-one/harmony/internal/configs/node"
 	"github.com/harmony-one/harmony/internal/utils"
 	"github.com/harmony-one/harmony/rosetta/common"
-	"github.com/harmony-one/harmony/rosetta/services"
 )
 
 var (
@@ -42,8 +40,8 @@ func StartServers(hmy *hmy.Harmony, config nodeconfig.RosettaServerConfig) error
 		return err
 	}
 
-	router := getRouter(serverAsserter, hmy)
-	router = server.RecoverMiddleware(rosettaServer.CorsMiddleware(rosettaServer.LoggerMiddleware(router)))
+	router := server.GetRouter(serverAsserter, hmy)
+	router = server.RecoverMiddleware(server.CorsMiddleware(server.LoggerMiddleware(router)))
 	utils.Logger().Info().
 		Int("port", config.HTTPPort).
 		Str("ip", config.HTTPIp).
@@ -80,14 +78,4 @@ func runHTTPServer(handler http.Handler, endpoint string) {
 		)
 	}
 	fmt.Printf("Started Rosetta server at: %v\n", endpoint)
-}
-
-func getRouter(asserter *asserter.Asserter, hmy *hmy.Harmony) http.Handler {
-	return rosettaServer.NewRouter(
-		rosettaServer.NewAccountAPIController(services.NewAccountAPI(hmy), asserter),
-		rosettaServer.NewBlockAPIController(services.NewBlockAPI(hmy), asserter),
-		rosettaServer.NewMempoolAPIController(services.NewMempoolAPI(hmy), asserter),
-		rosettaServer.NewNetworkAPIController(services.NewNetworkAPI(hmy), asserter),
-		rosettaServer.NewConstructionAPIController(services.NewConstructionAPI(hmy), asserter),
-	)
 }

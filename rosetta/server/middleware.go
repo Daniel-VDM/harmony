@@ -7,9 +7,18 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/coinbase/rosetta-sdk-go/server"
 	"github.com/pkg/errors"
 
 	"github.com/harmony-one/harmony/internal/utils"
+)
+
+// Export existing useful middlewares
+var (
+	// LoggerMiddleware to log all rosetta requests
+	LoggerMiddleware = server.LoggerMiddleware
+	// CorsMiddleware handles CORS
+	CorsMiddleware = server.CorsMiddleware
 )
 
 func RecoverMiddleware(h http.Handler) http.Handler {
