@@ -59,6 +59,10 @@ type ChainReader interface {
 	// ReadValidatorStats retrieves the running stats for a validator
 	ReadValidatorStats(addr common.Address) (*staking.ValidatorStats, error)
 
+	// ReadFirstBlockNumberOfStakingEra retrieves the first block number of the
+	// staking era for the given shardID. Only available for beacon shard.
+	ReadFirstBlockNumberOfStakingEra(shardID uint32) (*big.Int, error)
+
 	// SuperCommitteeForNextEpoch calculates the next epoch's supper committee
 	// isVerify flag is to indicate which stage
 	// to call this function: true (verification stage), false(propose stage)

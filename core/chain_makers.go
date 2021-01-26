@@ -263,6 +263,9 @@ func (cr *fakeChainReader) GetBlock(hash common.Hash, number uint64) *types.Bloc
 func (cr *fakeChainReader) ReadShardState(epoch *big.Int) (*shard.State, error)     { return nil, nil }
 func (cr *fakeChainReader) ReadValidatorList() ([]common.Address, error)            { return nil, nil }
 func (cr *fakeChainReader) ValidatorCandidates() []common.Address                   { return nil }
+func (cr *fakeChainReader) ReadFirstBlockNumberOfStakingEra(shardID uint32) (*big.Int, error) {
+	return nil, nil
+}
 func (cr *fakeChainReader) SuperCommitteeForNextEpoch(
 	beacon consensus_engine.ChainReader, header *block.Header, isVerify bool,
 ) (*shard.State, error) {

@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -329,4 +330,65 @@ func (bc *BlockChain) getNextBlockEpoch(header *block.Header) (*big.Int, error) 
 		}
 	}
 	return nextBlockEpoch, nil
+}
+
+const (
+	// firstCrossLinkSearchWindow is the number of sequential unseen crosslinks that must
+	// be found before returning the last found cross link as the first cross link of the shard.
+	firstCrossLinkSearchWindow = 10000
+)
+
+// ReadFirstBlockNumberOfStakingEra searches for the first crosslink of a shard.
+// TODO: clean-up code...
+func (bc *BlockChain) ReadFirstBlockNumberOfStakingEra(shardID uint32) (*big.Int, error) {
+	if bc.ShardID() != shard.BeaconChainShardID {
+		return nil, fmt.Errorf("method only available on beaconchain")
+	}
+	if !bc.Config().IsStaking(bc.CurrentHeader().Number()) {
+		return nil, fmt.Errorf("not in staking epoch")
+	}
+
+	lastCl, err := bc.ReadShardLastCrossLink(shardID)
+	if err != nil {
+		return nil, err
+	}
+	currBlockNumber := shard.Schedule.EpochLastBlock(bc.Config().StakingEpoch.Uint64())
+	if currBlockNumber > lastCl.BlockNum() {
+		currBlockNumber = lastCl.BlockNum()
+	}
+
+	var firstCrossLink *big.Int
+	unseenCount := 0
+
+	// check backwards backwards
+	for unseenCount < firstCrossLinkSearchWindow {
+		fmt.Printf("looking for %v backwards\n", currBlockNumber)
+		cl, err := bc.ReadCrossLink(shardID, currBlockNumber)
+		currBlockNumber--
+		if cl != nil && cl.Epoch().Cmp(bc.Config().StakingEpoch) == 1 {
+			unseenCount = 0
+			continue
+		}
+		if err != nil {
+			unseenCount++
+		} else {
+			unseenCount = 0
+			firstCrossLink = big.NewInt(0).SetUint64(cl.BlockNum())
+		}
+	}
+
+	// check forwards until we find something
+	for firstCrossLink == nil && currBlockNumber <= lastCl.BlockNum() {
+		fmt.Printf("looking for %v forwards\n", currBlockNumber)
+		cl, err := bc.ReadCrossLink(shardID, currBlockNumber)
+		currBlockNumber++
+		if err != nil {
+			continue
+		}
+		firstCrossLink = big.NewInt(0).SetUint64(cl.BlockNum())
+	}
+	if firstCrossLink == nil {
+		return nil, fmt.Errorf("could not find first cross link")
+	}
+	return firstCrossLink, nil
 }

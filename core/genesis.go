@@ -331,7 +331,7 @@ func (g *Genesis) MustCommit(db ethdb.Database) *types.Block {
 	return block
 }
 
-// getGenesisSpec ..
+// GetGenesisSpec ..
 func GetGenesisSpec(shardID uint32) *Genesis {
 	if shard.Schedule.GetNetworkID() == shardingconfig.MainNet {
 		return NewGenesisSpec(nodeconfig.Mainnet, shardID)
@@ -340,4 +340,13 @@ func GetGenesisSpec(shardID uint32) *Genesis {
 		return NewGenesisSpec(nodeconfig.Localnet, shardID)
 	}
 	return NewGenesisSpec(nodeconfig.Testnet, shardID)
+}
+
+// GetInitialSupply ..
+func GetInitialSupply(shardID uint32) *big.Int {
+	total, spec := big.NewInt(0), GetGenesisSpec(shardID)
+	for _, acc := range spec.Alloc {
+		total = new(big.Int).Add(total, acc.Balance)
+	}
+	return total
 }
